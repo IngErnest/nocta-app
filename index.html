@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nocta</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1B1330;
+    --bg-panel:#251B3F;
+    --coral:#FF6B5B;
+    --gold:#E8B84B;
+    --ink:#F5F0FF;
+    --ink-dim:#B7A9D9;
+    --hair:#3A2D5C;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 20% 10%, #2a1f4a 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #24183f 0%, transparent 45%),
+      var(--bg-deep);
+    font-family:'Sora', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  .top-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px 10px;
+  }
+  .brand{font-family:'Fraunces', serif; font-style:italic; font-weight:600; font-size:19px;}
+  .hello{font-size:11.5px; color:var(--ink-dim);}
+  .card-wrap{flex:1; padding:6px 20px 10px; position:relative;}
+  .swipe-card{
+    position:absolute; inset:6px 20px 10px 20px;
+    border-radius:26px; overflow:hidden;
+    background:linear-gradient(160deg,#3a2a63,#221741 70%);
+    border:1px solid var(--hair);
+  }
+  .card-photo{
+    height:58%;
+    background:linear-gradient(0deg, rgba(16,10,32,.9), rgba(16,10,32,0) 55%),
+               linear-gradient(135deg,#5b3f8f,#2c1f4e);
+    position:relative;
+  }
+  .group-tag{
+    position:absolute; top:14px; left:14px;
+    background:rgba(16,10,32,.55); border:1px solid #ffffff22;
+    padding:5px 10px; border-radius:999px; font-size:10.5px;
+  }
+  .card-info{padding:16px 18px 0;}
+  .name-age{font-family:'Fraunces', serif; font-size:21px; font-weight:600;}
+  .meta{color:var(--ink-dim); font-size:12.5px; margin-top:3px;}
+  .chip-row{display:flex; gap:6px; margin-top:14px; flex-wrap:wrap;}
+  .chip{font-size:11px; padding:5px 10px; border-radius:999px; background:var(--bg-panel); border:1px solid var(--hair); color:var(--ink-dim);}
+  .swipe-actions{position:absolute; bottom:18px; left:0; right:0; display:flex; justify-content:center; gap:18px;}
+  .sbtn{width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; border:1px solid var(--hair); background:var(--bg-panel); cursor:pointer;}
+  .sbtn.like{background:var(--coral); border:none; width:60px; height:60px; font-size:22px;}
+  .status-msg{
+    text-align:center; padding:14px; font-size:12.5px; color:var(--ink-dim);
+  }
+</style>
+</head>
+<body>
+  <div class="top-row">
+    <span class="brand">Nocta</span>
+    <span class="hello" id="hello">Cargando…</span>
+  </div>
+
+  <div class="card-wrap">
+    <div class="swipe-card" id="card">
+      <div class="card-photo">
+        <div class="group-tag">🎧 Vida de conciertos</div>
+      </div>
+      <div class="card-info">
+        <div class="name-age">Sofía, 27</div>
+        <div class="meta">A 3 km · activa en tu grupo esta semana</div>
+        <div class="chip-row">
+          <span class="chip">Indie rock</span>
+          <span class="chip">Fotografía</span>
+          <span class="chip">Viernes de festival</span>
+        </div>
+      </div>
+      <div class="swipe-actions">
+        <div class="sbtn" id="btn-no">✕</div>
+        <div class="sbtn like" id="btn-like">♥</div>
+        <div class="sbtn" id="btn-star">★</div>
+      </div>
+    </div>
+  </div>
+  <div class="status-msg" id="status">Perfil de ejemplo — pronto se conectará a perfiles reales</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    const user = tg.initDataUnsafe?.user;
+    document.getElementById('hello').textContent = user
+      ? `Hola, ${user.first_name}`
+      : 'Bienvenido';
+  } else {
+    document.getElementById('hello').textContent = 'Vista previa (fuera de Telegram)';
+  }
+
+  document.getElementById('btn-like').addEventListener('click', () => {
+    document.getElementById('status').textContent = '♥ Le diste like a Sofía (demo, aún sin guardar)';
+  });
+  document.getElementById('btn-no').addEventListener('click', () => {
+    document.getElementById('status').textContent = '✕ Pasaste de perfil (demo, aún sin guardar)';
+  });
+  document.getElementById('btn-star').addEventListener('click', () => {
+    document.getElementById('status').textContent = '★ Super like (demo, función Plus)';
+  });
+</script>
+</body>
+</html>
