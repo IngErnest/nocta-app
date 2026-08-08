@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nocta — Editar perfil</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1B1330;
+    --bg-panel:#251B3F;
+    --bg-card:#2E2251;
+    --coral:#FF6B5B;
+    --coral-dim:#c8503f;
+    --gold:#E8B84B;
+    --mint:#4ADE9E;
+    --ink:#F5F0FF;
+    --ink-dim:#B7A9D9;
+    --hair:#3A2D5C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #2a1f4a 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #24183f 0%, transparent 45%),
+      var(--bg-deep);
+    font-family:'Sora', sans-serif;
+    color:var(--ink);
+    padding:20px 16px 100px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:24px;
+    letter-spacing:0.01em;
+    margin:6px 0 4px;
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:13px;
+    margin:0 0 24px;
+  }
+  .campo{
+    margin-bottom:20px;
+  }
+  .campo label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--gold);
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .campo textarea,
+  .campo input[type="text"],
+  .campo input[type="number"]{
+    width:100%;
+    background:var(--bg-card);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:12px 14px;
+    color:var(--ink);
+    font-family:'Sora', sans-serif;
+    font-size:15px;
+    resize:none;
+  }
+  .campo textarea:focus,
+  .campo input:focus{
+    outline:none;
+    border-color:var(--coral);
+  }
+  .campo .conteo{
+    text-align:right;
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-top:4px;
+  }
+  .segmentado{
+    display:flex;
+    gap:6px;
+    background:var(--bg-panel);
+    border:1px solid var(--hair);
+    padding:5px;
+    border-radius:999px;
+  }
+  .segmentado button{
+    flex:1;
+    border:none;
+    background:transparent;
+    color:var(--ink-dim);
+    font-family:'Sora', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 4px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .segmentado button.activo{
+    background:var(--coral);
+    color:#fff;
+  }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .chip{
+    border:1px solid var(--hair);
+    background:var(--bg-card);
+    color:var(--ink-dim);
+    font-family:'Sora', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .chip.activo{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#251B3F;
+  }
+  .barra-guardar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, transparent, var(--bg-deep) 30%);
+  }
+  .btn-guardar{
+    width:100%;
+    border:none;
+    border-radius:16px;
+    background:var(--coral);
+    color:#fff;
+    font-family:'Sora', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    padding:15px;
+    cursor:pointer;
+  }
+  .btn-guardar:disabled{
+    opacity:0.6;
+  }
+  .estado{
+    text-align:center;
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+  }
+  .estado.ok{ color:var(--mint); }
+  .estado.error{ color:var(--coral); }
+  .cargando{
+    text-align:center;
+    color:var(--ink-dim);
+    padding:60px 0;
+    font-size:14px;
+  }
+  #formulario{ display:none; }
+</style>
+</head>
+<body>
+
+  <h1>Editar tu perfil</h1>
+  <p class="sub">Así te van a ver los demás en Nocta</p>
+
+  <div id="cargando" class="cargando">Cargando tu perfil…</div>
+
+  <form id="formulario">
+
+    <div class="campo">
+      <label for="bio">Bio</label>
+      <textarea id="bio" rows="3" maxlength="300" placeholder="Cuéntanos algo sobre ti…"></textarea>
+      <div class="conteo"><span id="bio-conteo">0</span>/300</div>
+    </div>
+
+    <div class="campo">
+      <label for="edad">Edad</label>
+      <input type="number" id="edad" min="18" max="99" placeholder="Ej. 28">
+    </div>
+
+    <div class="campo">
+      <label>Género</label>
+      <div class="segmentado" id="genero-grupo">
+        <button type="button" data-valor="Hombre">Hombre</button>
+        <button type="button" data-valor="Mujer">Mujer</button>
+        <button type="button" data-valor="Otro">Otro</button>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="ciudad">Ciudad</label>
+      <input type="text" id="ciudad" maxlength="100" placeholder="Ej. CDMX">
+    </div>
+
+    <div class="campo">
+      <label>Intereses</label>
+      <div class="chips" id="intereses-grupo">
+        <div class="chip" data-valor="🎮 Gamers">🎮 Gamers</div>
+        <div class="chip" data-valor="🎧 Conciertos">🎧 Conciertos</div>
+        <div class="chip" data-valor="☕ Charlas">☕ Charlas</div>
+      </div>
+    </div>
+
+  </form>
+
+  <div class="barra-guardar">
+    <button class="btn-guardar" id="btn-guardar" disabled>Guardar cambios</button>
+    <div class="estado" id="estado"></div>
+  </div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready();
+  tg?.expand();
+
+  const initData = tg?.initData || '';
+
+  // Base de la API: el mismo servicio de Railway que corre el bot.
+  const API_BASE = 'https://nocta-bot-production.up.railway.app';
+
+  const el = {
+    cargando: document.getElementById('cargando'),
+    formulario: document.getElementById('formulario'),
+    bio: document.getElementById('bio'),
+    bioConteo: document.getElementById('bio-conteo'),
+    edad: document.getElementById('edad'),
+    ciudad: document.getElementById('ciudad'),
+    generoGrupo: document.getElementById('genero-grupo'),
+    interesesGrupo: document.getElementById('intereses-grupo'),
+    btnGuardar: document.getElementById('btn-guardar'),
+    estado: document.getElementById('estado'),
+  };
+
+  let generoSeleccionado = null;
+  let interesesSeleccionados = new Set();
+
+  function pintarGenero() {
+    [...el.generoGrupo.children].forEach((btn) => {
+      btn.classList.toggle('activo', btn.dataset.valor === generoSeleccionado);
+    });
+  }
+
+  function pintarIntereses() {
+    [...el.interesesGrupo.children].forEach((chip) => {
+      chip.classList.toggle('activo', interesesSeleccionados.has(chip.dataset.valor));
+    });
+  }
+
+  el.generoGrupo.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    generoSeleccionado = btn.dataset.valor;
+    pintarGenero();
+  });
+
+  el.interesesGrupo.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const valor = chip.dataset.valor;
+    if (interesesSeleccionados.has(valor)) {
+      interesesSeleccionados.delete(valor);
+    } else {
+      interesesSeleccionados.add(valor);
+    }
+    pintarIntereses();
+  });
+
+  el.bio.addEventListener('input', () => {
+    el.bioConteo.textContent = el.bio.value.length;
+  });
+
+  async function cargarPerfil() {
+    try {
+      const res = await fetch(`${API_BASE}/api/perfil`, {
+        headers: { 'x-telegram-init-data': initData },
+      });
+      if (!res.ok) throw new Error('No se pudo cargar tu perfil');
+      const perfil = await res.json();
+
+      el.bio.value = perfil.bio || '';
+      el.bioConteo.textContent = el.bio.value.length;
+      el.edad.value = perfil.edad || '';
+      el.ciudad.value = perfil.ciudad || '';
+      generoSeleccionado = perfil.genero || null;
+      pintarGenero();
+
+      (perfil.intereses || '').split(',').map((s) => s.trim()).filter(Boolean).forEach((i) => {
+        interesesSeleccionados.add(i);
+      });
+      pintarIntereses();
+
+      el.cargando.style.display = 'none';
+      el.formulario.style.display = 'block';
+      el.btnGuardar.disabled = false;
+    } catch (e) {
+      el.cargando.textContent = 'No se pudo cargar tu perfil. Cierra y vuelve a abrir la app.';
+    }
+  }
+
+  el.btnGuardar.addEventListener('click', async () => {
+    el.btnGuardar.disabled = true;
+    el.estado.textContent = 'Guardando…';
+    el.estado.className = 'estado';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/perfil`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-telegram-init-data': initData,
+        },
+        body: JSON.stringify({
+          bio: el.bio.value,
+          edad: el.edad.value,
+          genero: generoSeleccionado || '',
+          ciudad: el.ciudad.value,
+          intereses: [...interesesSeleccionados].join(', '),
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      el.estado.textContent = '✅ Perfil actualizado';
+      el.estado.className = 'estado ok';
+      tg?.HapticFeedback?.notificationOccurred('success');
+    } catch (e) {
+      el.estado.textContent = 'Error al guardar. Intenta de nuevo.';
+      el.estado.className = 'estado error';
+    } finally {
+      el.btnGuardar.disabled = false;
+    }
+  });
+
+  cargarPerfil();
+</script>
+</body>
+</html>
