@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nocta — Eventos</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1B1330; --bg-panel:#251B3F; --bg-card:#2E2251;
+    --coral:#FF6B5B; --gold:#E8B84B; --mint:#4ADE9E;
+    --ink:#F5F0FF; --ink-dim:#B7A9D9; --hair:#3A2D5C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #2a1f4a 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #24183f 0%, transparent 45%),
+      var(--bg-deep);
+    font-family:'Sora', sans-serif; color:var(--ink);
+    padding:18px 16px 100px;
+  }
+  h1{ font-family:'Fraunces', serif; font-style:italic; font-weight:600; font-size:22px; margin:0; }
+  .sub{ color:var(--ink-dim); font-size:12.5px; margin:4px 0 20px; }
+
+  .evento-card{
+    background:var(--bg-card); border:1px solid var(--hair); border-radius:16px;
+    padding:14px 16px; margin-bottom:12px;
+  }
+  .evento-card .fecha{
+    font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:.03em;
+  }
+  .evento-card h3{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; margin:6px 0 4px; }
+  .evento-card p{ color:var(--ink-dim); font-size:13px; margin:0 0 10px; line-height:1.4; }
+  .direccion{
+    display:flex; align-items:center; gap:6px; font-size:13px;
+    padding:9px 12px; border-radius:10px; background:var(--bg-panel);
+  }
+  .direccion.visible{ color:var(--mint); }
+  .direccion.bloqueada{ color:var(--ink-dim); border:1px dashed var(--hair); }
+  .btn-cancelar{
+    margin-top:10px; width:100%; border:1px solid var(--coral); background:transparent;
+    color:var(--coral); font-weight:700; font-size:13px; padding:8px; border-radius:10px; cursor:pointer;
+    font-family:'Sora', sans-serif;
+  }
+
+  .vacio, .cargando{ text-align:center; color:var(--ink-dim); font-size:14px; padding:60px 20px; }
+
+  .fab-crear{
+    position:fixed; right:18px; bottom:24px; width:56px; height:56px; border-radius:50%;
+    background:var(--gold); color:#251B3F; border:none; font-size:26px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);
+  }
+
+  #modal-crear{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
+    align-items:flex-end; z-index:10;
+  }
+  #modal-crear .hoja{
+    background:var(--bg-panel); width:100%; border-radius:20px 20px 0 0;
+    padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+    max-height:85vh; overflow-y:auto;
+  }
+  #modal-crear h2{ font-family:'Fraunces', serif; font-size:19px; margin:0 0 14px; }
+  .campo{ margin-bottom:14px; }
+  .campo label{ display:block; font-size:11px; color:var(--gold); font-weight:700; text-transform:uppercase; margin-bottom:6px; }
+  .campo input, .campo textarea{
+    width:100%; background:var(--bg-card); border:1px solid var(--hair); border-radius:12px;
+    padding:10px 12px; color:var(--ink); font-family:'Sora', sans-serif; font-size:14px; resize:none;
+  }
+  .campo input:focus, .campo textarea:focus{ outline:none; border-color:var(--coral); }
+  .btn-fila{ display:flex; gap:10px; margin-top:6px; }
+  .btn-fila button{
+    flex:1; border:none; border-radius:12px; padding:12px; font-weight:700;
+    font-family:'Sora', sans-serif; font-size:14px; cursor:pointer;
+  }
+  .btn-cancelar-modal{ background:var(--bg-card); color:var(--ink-dim); }
+  .btn-crear-modal{ background:var(--coral); color:#fff; }
+</style>
+</head>
+<body>
+
+  <h1>Eventos</h1>
+  <p class="sub">Encuentros de la comunidad Nocta</p>
+
+  <div id="lista-contenido" class="cargando">Cargando eventos…</div>
+
+  <button class="fab-crear" id="btn-fab" style="display:none">+</button>
+
+  <div id="modal-crear">
+    <div class="hoja">
+      <h2>Crear evento</h2>
+      <div class="campo">
+        <label>Nombre</label>
+        <input type="text" id="ev-nombre" maxlength="80" placeholder="Ej. Noche de trivia en Condesa">
+      </div>
+      <div class="campo">
+        <label>Descripción</label>
+        <textarea id="ev-descripcion" rows="2" maxlength="200" placeholder="De qué va este evento…"></textarea>
+      </div>
+      <div class="campo">
+        <label>Fecha y hora</label>
+        <input type="datetime-local" id="ev-fecha">
+      </div>
+      <div class="campo">
+        <label>Dirección exacta</label>
+        <input type="text" id="ev-direccion" maxlength="200" placeholder="Solo la ven usuarios Premium">
+      </div>
+      <div class="btn-fila">
+        <button class="btn-cancelar-modal" id="btn-cancelar-crear">Cancelar</button>
+        <button class="btn-crear-modal" id="btn-confirmar-crear">Crear evento</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready();
+  tg?.expand();
+  const initData = tg?.initData || '';
+  const API_BASE = 'https://nocta-bot-production.up.railway.app';
+  const cabecera = { 'x-telegram-init-data': initData };
+
+  function formatearFecha(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }) +
+      ' · ' + d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function cargarEventos() {
+    const cont = document.getElementById('lista-contenido');
+    try {
+      const res = await fetch(`${API_BASE}/api/eventos`, { headers: cabecera });
+      const data = await res.json();
+
+      document.getElementById('btn-fab').style.display = data.puedeCrear ? 'block' : 'none';
+
+      if (!data.eventos || data.eventos.length === 0) {
+        cont.className = 'vacio';
+        cont.innerHTML = 'No hay eventos próximos todavía.';
+        return;
+      }
+
+      cont.className = '';
+      cont.innerHTML = data.eventos.map((e) => `
+        <div class="evento-card">
+          <div class="fecha">${formatearFecha(e.fecha_evento)}</div>
+          <h3>${escapeHtml(e.nombre)}</h3>
+          <p>${escapeHtml(e.descripcion || '')}</p>
+          ${e.direccion_bloqueada
+            ? '<div class="direccion bloqueada">🔒 Dirección exclusiva Premium</div>'
+            : `<div class="direccion visible">📍 ${escapeHtml(e.direccion || '')}</div>`}
+          ${e.es_mio ? `<button class="btn-cancelar" data-id="${e.id}">Cancelar evento</button>` : ''}
+        </div>
+      `).join('');
+
+      cont.querySelectorAll('.btn-cancelar').forEach((btn) => {
+        btn.addEventListener('click', () => cancelarEvento(btn.dataset.id));
+      });
+    } catch (e) {
+      cont.className = 'vacio';
+      cont.innerHTML = 'No se pudo cargar. Cierra y vuelve a abrir la app.';
+    }
+  }
+
+  async function cancelarEvento(id) {
+    if (!confirm('¿Cancelar este evento?')) return;
+    try {
+      await fetch(`${API_BASE}/api/eventos/${id}`, { method: 'DELETE', headers: cabecera });
+      cargarEventos();
+    } catch (e) {}
+  }
+
+  document.getElementById('btn-fab').addEventListener('click', () => {
+    document.getElementById('modal-crear').style.display = 'flex';
+  });
+  document.getElementById('btn-cancelar-crear').addEventListener('click', () => {
+    document.getElementById('modal-crear').style.display = 'none';
+  });
+  document.getElementById('btn-confirmar-crear').addEventListener('click', async () => {
+    const nombre = document.getElementById('ev-nombre').value.trim();
+    const descripcion = document.getElementById('ev-descripcion').value.trim();
+    const fecha_evento = document.getElementById('ev-fecha').value;
+    const direccion = document.getElementById('ev-direccion').value.trim();
+
+    if (!nombre || !fecha_evento || !direccion) {
+      alert('Nombre, fecha y dirección son obligatorios.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/eventos`, {
+        method: 'POST',
+        headers: { ...cabecera, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion, fecha_evento, direccion }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      document.getElementById('modal-crear').style.display = 'none';
+      tg?.HapticFeedback?.notificationOccurred('success');
+      cargarEventos();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  cargarEventos();
+</script>
+</body>
+</html>
