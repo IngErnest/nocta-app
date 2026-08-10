@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nocta — Panel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1B1330; --bg-panel:#251B3F; --bg-card:#2E2251;
+    --coral:#FF6B5B; --gold:#E8B84B; --mint:#4ADE9E;
+    --ink:#F5F0FF; --ink-dim:#B7A9D9; --hair:#3A2D5C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg-deep);
+    font-family:'Sora', sans-serif; color:var(--ink);
+  }
+  h1{ font-family:'Fraunces', serif; font-style:italic; font-weight:600; }
+
+  /* ---- Login ---- */
+  #vista-login{
+    display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; gap:16px;
+  }
+  #vista-login h1{ font-size:28px; margin:0; }
+  #vista-login input{
+    background:var(--bg-card); border:1px solid var(--hair); border-radius:12px;
+    padding:12px 16px; color:var(--ink); font-size:15px; width:260px; font-family:'Sora', sans-serif;
+  }
+  #vista-login input:focus{ outline:none; border-color:var(--coral); }
+  #vista-login button{
+    background:var(--coral); border:none; border-radius:12px; color:#fff; font-weight:700;
+    padding:12px; width:260px; cursor:pointer; font-size:15px; font-family:'Sora', sans-serif;
+  }
+  #login-error{ color:var(--coral); font-size:13px; min-height:16px; }
+
+  /* ---- App ---- */
+  #vista-app{ display:none; max-width:900px; margin:0 auto; padding:24px 20px 60px; }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  .topbar h1{ font-size:24px; margin:0; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:20px; border-bottom:1px solid var(--hair); }
+  .tab{
+    background:none; border:none; color:var(--ink-dim); font-family:'Sora', sans-serif;
+    font-weight:600; font-size:14px; padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab.activo{ color:var(--coral); border-color:var(--coral); }
+
+  .buscador{
+    background:var(--bg-card); border:1px solid var(--hair); border-radius:10px;
+    padding:9px 14px; color:var(--ink); font-family:'Sora', sans-serif; font-size:14px;
+    width:100%; margin-bottom:16px;
+  }
+  .buscador:focus{ outline:none; border-color:var(--coral); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; color:var(--gold); font-size:11px; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--hair); }
+  td{ padding:10px; border-bottom:1px solid var(--hair); vertical-align:middle; }
+  tr:hover td{ background:rgba(255,255,255,0.02); }
+
+  select{
+    background:var(--bg-card); border:1px solid var(--hair); border-radius:8px; color:var(--ink);
+    padding:5px 8px; font-family:'Sora', sans-serif; font-size:12.5px;
+  }
+  .badge{ padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+  .badge.regular{ background:var(--bg-panel); color:var(--ink-dim); }
+  .badge.plus{ background:rgba(255,107,91,0.15); color:var(--coral); }
+  .badge.premium{ background:rgba(232,184,75,0.15); color:var(--gold); }
+  .badge.activo{ background:rgba(74,222,158,0.15); color:var(--mint); }
+  .badge.expirado{ background:rgba(183,169,217,0.15); color:var(--ink-dim); }
+  .badge.pendiente{ background:rgba(255,107,91,0.15); color:var(--coral); }
+  .badge.revisado{ background:rgba(74,222,158,0.15); color:var(--mint); }
+  .badge.descartado{ background:var(--bg-panel); color:var(--ink-dim); }
+
+  .btn-mini{
+    border:none; border-radius:8px; font-size:11.5px; font-weight:700; padding:6px 10px;
+    cursor:pointer; font-family:'Sora', sans-serif; margin-right:4px;
+  }
+  .btn-eliminar{ background:transparent; border:1px solid var(--coral); color:var(--coral); }
+  .btn-ok{ background:var(--mint); color:#132018; }
+  .btn-neutro{ background:var(--bg-card); color:var(--ink-dim); border:1px solid var(--hair); }
+
+  .cargando, .vacio{ text-align:center; color:var(--ink-dim); padding:40px; font-size:14px; }
+</style>
+</head>
+<body>
+
+  <div id="vista-login">
+    <h1>Nocta Admin</h1>
+    <input type="password" id="input-password" placeholder="Contraseña">
+    <button id="btn-login">Entrar</button>
+    <div id="login-error"></div>
+  </div>
+
+  <div id="vista-app">
+    <div class="topbar">
+      <h1>Panel Admin</h1>
+    </div>
+
+    <div class="tabs">
+      <button class="tab activo" data-tab="usuarios">Usuarios</button>
+      <button class="tab" data-tab="grupos">Grupos</button>
+      <button class="tab" data-tab="reportes">Reportes</button>
+    </div>
+
+    <div id="tab-usuarios">
+      <input type="text" class="buscador" id="buscar-usuarios" placeholder="Buscar por nombre o telegram_id…">
+      <div id="contenido-usuarios" class="cargando">Cargando…</div>
+    </div>
+
+    <div id="tab-grupos" style="display:none">
+      <div id="contenido-grupos" class="cargando">Cargando…</div>
+    </div>
+
+    <div id="tab-reportes" style="display:none">
+      <div id="contenido-reportes" class="cargando">Cargando…</div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = 'https://nocta-bot-production.up.railway.app';
+  let adminPassword = sessionStorage.getItem('nocta_admin_password') || '';
+
+  function cabecera() {
+    return { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' };
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  async function intentarLogin(password) {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    return res.ok;
+  }
+
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    const password = document.getElementById('input-password').value;
+    const ok = await intentarLogin(password);
+    if (ok) {
+      adminPassword = password;
+      sessionStorage.setItem('nocta_admin_password', password);
+      mostrarApp();
+    } else {
+      document.getElementById('login-error').textContent = 'Contraseña incorrecta.';
+    }
+  });
+  document.getElementById('input-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-login').click();
+  });
+
+  function mostrarApp() {
+    document.getElementById('vista-login').style.display = 'none';
+    document.getElementById('vista-app').style.display = 'block';
+    cargarUsuarios();
+  }
+
+  // Si ya había sesión guardada, valida silenciosamente
+  if (adminPassword) {
+    intentarLogin(adminPassword).then((ok) => { if (ok) mostrarApp(); });
+  }
+
+  // ---- Tabs ----
+  document.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach((t) => t.classList.remove('activo'));
+      tab.classList.add('activo');
+      ['usuarios', 'grupos', 'reportes'].forEach((n) => {
+        document.getElementById(`tab-${n}`).style.display = n === tab.dataset.tab ? 'block' : 'none';
+      });
+      if (tab.dataset.tab === 'usuarios') cargarUsuarios();
+      if (tab.dataset.tab === 'grupos') cargarGrupos();
+      if (tab.dataset.tab === 'reportes') cargarReportes();
+    });
+  });
+
+  // ---- Usuarios ----
+  let temporizadorBusqueda;
+  document.getElementById('buscar-usuarios').addEventListener('input', (e) => {
+    clearTimeout(temporizadorBusqueda);
+    temporizadorBusqueda = setTimeout(() => cargarUsuarios(e.target.value), 350);
+  });
+
+  async function cargarUsuarios(buscar = '') {
+    const cont = document.getElementById('contenido-usuarios');
+    cont.className = 'cargando';
+    cont.textContent = 'Cargando…';
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/usuarios?buscar=${encodeURIComponent(buscar)}`, { headers: cabecera() });
+      const data = await res.json();
+
+      if (!data.usuarios || data.usuarios.length === 0) {
+        cont.className = 'vacio';
+        cont.textContent = 'Sin resultados.';
+        return;
+      }
+
+      cont.className = '';
+      cont.innerHTML = `<table>
+        <tr><th>Nombre</th><th>Telegram ID</th><th>Edad</th><th>Ciudad</th><th>Tier</th><th>Admin</th><th></th></tr>
+        ${data.usuarios.map((u) => `
+          <tr>
+            <td>${escapeHtml(u.nombre)}</td>
+            <td>${u.telegram_id}</td>
+            <td>${u.edad ?? '—'}</td>
+            <td>${escapeHtml(u.ciudad) || '—'}</td>
+            <td>
+              <select data-id="${u.telegram_id}" class="select-tier">
+                <option value="regular" ${u.tier === 'regular' ? 'selected' : ''}>Regular</option>
+                <option value="plus" ${u.tier === 'plus' ? 'selected' : ''}>Plus</option>
+                <option value="premium" ${u.tier === 'premium' ? 'selected' : ''}>Premium</option>
+              </select>
+            </td>
+            <td>${u.es_admin ? '👑' : '—'}</td>
+            <td><button class="btn-mini btn-eliminar" data-id="${u.telegram_id}" data-accion="eliminar-usuario">Eliminar</button></td>
+          </tr>
+        `).join('')}
+      </table>`;
+
+      cont.querySelectorAll('.select-tier').forEach((sel) => {
+        sel.addEventListener('change', async () => {
+          await fetch(`${API_BASE}/api/admin/usuarios/${sel.dataset.id}`, {
+            method: 'PATCH', headers: cabecera(), body: JSON.stringify({ tier: sel.value }),
+          });
+        });
+      });
+
+      cont.querySelectorAll('[data-accion="eliminar-usuario"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar este usuario por completo? No se puede deshacer.')) return;
+          await fetch(`${API_BASE}/api/admin/usuarios/${btn.dataset.id}`, { method: 'DELETE', headers: cabecera() });
+          cargarUsuarios(document.getElementById('buscar-usuarios').value);
+        });
+      });
+    } catch (e) {
+      cont.className = 'vacio';
+      cont.textContent = 'Error al cargar.';
+    }
+  }
+
+  // ---- Grupos ----
+  async function cargarGrupos() {
+    const cont = document.getElementById('contenido-grupos');
+    cont.className = 'cargando';
+    cont.textContent = 'Cargando…';
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/grupos`, { headers: cabecera() });
+      const data = await res.json();
+
+      if (!data.grupos || data.grupos.length === 0) {
+        cont.className = 'vacio';
+        cont.textContent = 'No hay grupos todavía.';
+        return;
+      }
+
+      cont.className = '';
+      cont.innerHTML = `<table>
+        <tr><th>Nombre</th><th>Creador</th><th>Miembros</th><th>Estado</th><th>Expira</th><th></th></tr>
+        ${data.grupos.map((g) => `
+          <tr>
+            <td>${escapeHtml(g.nombre)} ${g.es_privado ? '💎' : ''}</td>
+            <td>${g.creador_telegram_id}</td>
+            <td>${g.miembros_actuales}/${g.capacidad_maxima}</td>
+            <td><span class="badge ${g.estado}">${g.estado}</span></td>
+            <td>${new Date(g.fecha_expiracion).toLocaleString('es-MX')}</td>
+            <td><button class="btn-mini btn-eliminar" data-id="${g.id}" data-accion="eliminar-grupo">Eliminar</button></td>
+          </tr>
+        `).join('')}
+      </table>`;
+
+      cont.querySelectorAll('[data-accion="eliminar-grupo"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar este grupo por completo?')) return;
+          await fetch(`${API_BASE}/api/admin/grupos/${btn.dataset.id}`, { method: 'DELETE', headers: cabecera() });
+          cargarGrupos();
+        });
+      });
+    } catch (e) {
+      cont.className = 'vacio';
+      cont.textContent = 'Error al cargar.';
+    }
+  }
+
+  // ---- Reportes ----
+  async function cargarReportes() {
+    const cont = document.getElementById('contenido-reportes');
+    cont.className = 'cargando';
+    cont.textContent = 'Cargando…';
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/reportes`, { headers: cabecera() });
+      const data = await res.json();
+
+      if (!data.reportes || data.reportes.length === 0) {
+        cont.className = 'vacio';
+        cont.textContent = 'No hay reportes todavía.';
+        return;
+      }
+
+      cont.className = '';
+      cont.innerHTML = `<table>
+        <tr><th>Reportado</th><th>Reportante</th><th>Motivo</th><th>Fecha</th><th>Estado</th><th></th></tr>
+        ${data.reportes.map((r) => `
+          <tr>
+            <td>${escapeHtml(r.nombre_reportado)}</td>
+            <td>${escapeHtml(r.nombre_reportante)}</td>
+            <td>${escapeHtml(r.motivo) || '—'}</td>
+            <td>${new Date(r.created_at).toLocaleDateString('es-MX')}</td>
+            <td><span class="badge ${r.estado}">${r.estado}</span></td>
+            <td>
+              ${r.estado === 'pendiente' ? `
+                <button class="btn-mini btn-eliminar" data-id="${r.id}" data-accion="bloquear">Bloquear</button>
+                <button class="btn-mini btn-neutro" data-id="${r.id}" data-accion="descartar">Descartar</button>
+              ` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </table>`;
+
+      cont.querySelectorAll('[data-accion="bloquear"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Bloquear al usuario reportado y marcar como revisado?')) return;
+          await fetch(`${API_BASE}/api/admin/reportes/${btn.dataset.id}/bloquear-reportado`, { method: 'POST', headers: cabecera() });
+          cargarReportes();
+        });
+      });
+
+      cont.querySelectorAll('[data-accion="descartar"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          await fetch(`${API_BASE}/api/admin/reportes/${btn.dataset.id}`, {
+            method: 'PATCH', headers: cabecera(), body: JSON.stringify({ estado: 'descartado' }),
+          });
+          cargarReportes();
+        });
+      });
+    } catch (e) {
+      cont.className = 'vacio';
+      cont.textContent = 'Error al cargar.';
+    }
+  }
+</script>
+</body>
+</html>
