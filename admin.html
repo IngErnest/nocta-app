@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nocta — Panel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D14;
+    --bg-elevated:#0E121C;
+    --surface:#141926;
+    --surface-2:#1A2032;
+    --border:#242B3D;
+    --border-soft:#1B2130;
+    --text:#EDEFF5;
+    --text-dim:#939ab3;
+    --text-faint:#565f75;
+    --violet:#B455FF;
+    --violet-soft:rgba(180,85,255,0.14);
+    --amber:#FFB454;
+    --amber-soft:rgba(255,180,84,0.14);
+    --teal:#2FE0C4;
+    --teal-soft:rgba(47,224,196,0.14);
+    --rose:#FF5C7A;
+    --rose-soft:rgba(255,92,122,0.14);
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  ::selection{background:var(--violet-soft);color:var(--text);}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    position:fixed;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(180,85,255,0.10), transparent),
+      var(--bg);
+    z-index:100;
+    overflow:hidden;
+  }
+  .radar{
+    position:absolute;
+    width:900px;height:900px;
+    border-radius:50%;
+    border:1px solid var(--border-soft);
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+  }
+  .radar::before,.radar::after{
+    content:'';position:absolute;border-radius:50%;border:1px solid var(--border-soft);
+  }
+  .radar::before{inset:150px;}
+  .radar::after{inset:300px;}
+  .radar-sweep{
+    position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(180,85,255,0.16), transparent 30%);
+    animation:sweep 6s linear infinite;
+  }
+  @keyframes sweep{to{transform:rotate(360deg);}}
+  .login-card{
+    position:relative;z-index:2;
+    width:380px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:36px 32px;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,0.6);
+  }
+  .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .login-brand .dot{width:9px;height:9px;border-radius:50%;background:var(--violet);box-shadow:0 0 12px var(--violet);animation:pulse-dot 2s ease-in-out infinite;}
+  .login-brand span{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;}
+  .login-card h1{font-family:var(--font-display);font-size:22px;font-weight:600;margin-bottom:6px;}
+  .login-card p{color:var(--text-dim);font-size:13px;margin-bottom:24px;}
+  .login-card input{
+    width:100%;background:var(--bg-elevated);border:1px solid var(--border);
+    border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--font-mono);
+    font-size:13px;margin-bottom:14px;outline:none;transition:border-color .15s;
+  }
+  .login-card input:focus{border-color:var(--violet);}
+  .login-card button{
+    width:100%;background:var(--violet);color:#0A0D14;border:none;
+    border-radius:8px;padding:12px;font-weight:600;font-size:13px;
+    transition:opacity .15s;
+  }
+  .login-card button:hover{opacity:.88;}
+  .login-error{color:var(--rose);font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);}
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none;height:100vh;}
+  .shell{display:flex;height:100%;}
+
+  /* Sidebar */
+  .sidebar{
+    width:224px;flex-shrink:0;
+    background:var(--bg-elevated);
+    border-right:1px solid var(--border-soft);
+    display:flex;flex-direction:column;
+    padding:22px 0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 22px 22px;border-bottom:1px solid var(--border-soft);margin-bottom:14px;}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet);animation:pulse-dot 2s ease-in-out infinite;}
+  .brand-text{font-family:var(--font-display);font-weight:600;font-size:15px;}
+  .brand-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+
+  nav{flex:1;padding:4px 12px;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;
+    padding:10px 12px;border-radius:8px;
+    color:var(--text-dim);font-size:13px;font-weight:500;
+    border:1px solid transparent;
+    transition:background .12s,color .12s;
+    position:relative;
+  }
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.85;}
+  .nav-item:hover{background:var(--surface);color:var(--text);}
+  .nav-item.active{background:var(--violet-soft);color:var(--text);border-color:rgba(180,85,255,0.25);}
+  .nav-item.active svg{stroke:var(--violet);}
+  .nav-badge{
+    margin-left:auto;background:var(--rose);color:#fff;font-family:var(--font-mono);
+    font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;
+  }
+  .nav-badge.hidden{display:none;}
+
+  .sidebar-foot{padding:14px 22px 0;border-top:1px solid var(--border-soft);margin-top:10px;}
+  .admin-chip{display:flex;align-items:center;gap:9px;}
+  .admin-avatar{
+    width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--violet),var(--amber));
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;color:#0A0D14;
+  }
+  .admin-name{font-size:12.5px;font-weight:600;}
+  .admin-role{font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.06em;}
+  .logout-btn{
+    margin-top:12px;width:100%;background:none;border:1px solid var(--border);
+    color:var(--text-faint);border-radius:7px;padding:8px;font-size:11.5px;
+    transition:border-color .15s,color .15s;
+  }
+  .logout-btn:hover{border-color:var(--rose);color:var(--rose);}
+
+  /* Main */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px;border-bottom:1px solid var(--border-soft);
+    flex-shrink:0;
+  }
+  .topbar h2{font-family:var(--font-display);font-size:19px;font-weight:600;}
+  .topbar-sub{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .clock{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);text-align:right;}
+  .clock .tz{font-size:10px;color:var(--text-faint);}
+
+  /* Pulse bar — signature element */
+  .pulsebar{
+    height:34px;flex-shrink:0;display:flex;align-items:flex-end;gap:3px;
+    padding:0 32px 8px;border-bottom:1px solid var(--border-soft);
+    background:var(--bg-elevated);
+  }
+  .pulsebar .bar{width:3px;border-radius:1px;background:var(--violet);opacity:.35;transition:height .5s cubic-bezier(.4,0,.2,1);}
+  .pulsebar-label{
+    font-family:var(--font-mono);font-size:9.5px;color:var(--text-faint);
+    letter-spacing:.1em;text-transform:uppercase;align-self:center;margin-right:12px;white-space:nowrap;
+  }
+
+  .content{flex:1;overflow-y:auto;padding:26px 32px 60px;}
+  .section{display:none;}
+  .section.active{display:block;animation:fade-in .25s ease;}
+  @keyframes fade-in{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  /* KPI grid */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:28px;}
+  .kpi-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:11px;
+    padding:18px 18px 16px;position:relative;overflow:hidden;
+  }
+  .kpi-card::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:var(--kpi-accent,var(--violet));opacity:.7;
+  }
+  .kpi-label{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+  .kpi-value{font-family:var(--font-mono);font-size:26px;font-weight:600;line-height:1;}
+  .kpi-delta{font-size:11.5px;margin-top:8px;color:var(--text-dim);}
+  .kpi-delta.up{color:var(--teal);}
+  .kpi-delta.down{color:var(--rose);}
+
+  /* Panels */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-soft);}
+  .panel-head h3{font-family:var(--font-display);font-size:14.5px;font-weight:600;}
+  .panel-head .hint{font-size:11.5px;color:var(--text-faint);}
+  .panel-body{padding:18px 20px;}
+
+  .two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;}
+  @media(max-width:1100px){.two-col{grid-template-columns:1fr;}}
+
+  /* Activity feed */
+  .feed{display:flex;flex-direction:column;}
+  .feed-row{
+    display:flex;align-items:baseline;gap:10px;padding:9px 0;
+    border-bottom:1px solid var(--border-soft);font-family:var(--font-mono);font-size:12px;
+  }
+  .feed-row:last-child{border-bottom:none;}
+  .feed-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;position:relative;top:-1px;}
+  .feed-time{color:var(--text-faint);flex-shrink:0;width:46px;}
+  .feed-text{color:var(--text-dim);flex:1;}
+  .feed-text b{color:var(--text);font-weight:500;}
+
+  /* Tier distribution bar */
+  .tier-bar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:6px 0 14px;}
+  .tier-seg{height:100%;}
+  .tier-legend{display:flex;flex-direction:column;gap:8px;}
+  .tier-legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;}
+  .tier-legend-left{display:flex;align-items:center;gap:8px;}
+  .swatch{width:8px;height:8px;border-radius:2px;}
+  .tier-legend .val{font-family:var(--font-mono);color:var(--text-dim);}
+
+  /* Charts */
+  .chart-wrap{display:flex;gap:16px;align-items:flex-end;height:150px;padding-top:10px;}
+  .chart-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;}
+  .chart-bars{display:flex;gap:3px;align-items:flex-end;height:118px;}
+  .chart-bars .bar{width:9px;border-radius:2px 2px 0 0;}
+  .chart-label{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);}
+  .chart-legend{display:flex;gap:18px;margin-top:14px;}
+  .chart-legend-item{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-dim);}
+
+  /* Filters */
+  .filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .chip{
+    padding:7px 13px;border-radius:20px;border:1px solid var(--border);
+    background:var(--bg-elevated);color:var(--text-dim);font-size:12px;font-weight:500;
+    transition:all .12s;
+  }
+  .chip:hover{border-color:var(--text-faint);color:var(--text);}
+  .chip.active{background:var(--violet-soft);border-color:rgba(180,85,255,.4);color:var(--text);}
+
+  .search-input{
+    width:100%;background:var(--bg-elevated);border:1px solid var(--border);
+    border-radius:9px;padding:11px 14px;color:var(--text);font-size:13px;outline:none;
+    margin-bottom:16px;transition:border-color .15s;
+  }
+  .search-input:focus{border-color:var(--violet);}
+  .search-input::placeholder{color:var(--text-faint);}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;}
+  thead th{
+    text-align:left;font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);
+    letter-spacing:.07em;text-transform:uppercase;padding:0 14px 10px;font-weight:500;
+  }
+  tbody tr{border-top:1px solid var(--border-soft);}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody td{padding:13px 14px;font-size:13px;vertical-align:middle;}
+  .cell-mono{font-family:var(--font-mono);color:var(--text-dim);font-size:12px;}
+  .cell-name{font-weight:500;}
+
+  .status-dot{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim);}
+  .status-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--dot-color,var(--text-faint));}
+  .status-dot.live::before{box-shadow:0 0 8px var(--dot-color);animation:pulse-dot 1.6s ease-in-out infinite;}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;
+    font-size:11.5px;font-weight:600;font-family:var(--font-body);
+  }
+  .badge-regular{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);}
+  .badge-plus{background:var(--violet-soft);color:var(--violet);border:1px solid rgba(180,85,255,.3);}
+  .badge-premium{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,180,84,.35);}
+
+  select.tier-select{
+    background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);
+    font-size:12px;font-family:var(--font-body);font-weight:600;padding:6px 10px;border-radius:7px;
+    outline:none;cursor:pointer;
+  }
+
+  .icon-btn{
+    background:none;border:1px solid var(--border);color:var(--text-faint);
+    padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:500;transition:all .12s;
+  }
+  .icon-btn.danger:hover{border-color:var(--rose);color:var(--rose);}
+  .icon-btn.ghost:hover{border-color:var(--text-dim);color:var(--text);}
+  .icon-btn.accept:hover{border-color:var(--teal);color:var(--teal);}
+
+  .crown{color:var(--amber);}
+
+  /* Reports */
+  .report-card{
+    border:1px solid var(--border);border-left:3px solid var(--rose);border-radius:9px;
+    padding:15px 18px;margin-bottom:10px;background:var(--surface);
+  }
+  .report-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .report-parties{font-size:13px;}
+  .report-parties .arrow{color:var(--text-faint);margin:0 6px;}
+  .report-parties b{font-weight:600;}
+  .report-time{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);white-space:nowrap;}
+  .report-reason{
+    display:inline-block;background:var(--rose-soft);color:var(--rose);font-size:11.5px;
+    padding:4px 10px;border-radius:6px;margin-bottom:12px;font-weight:500;
+  }
+  .report-actions{display:flex;gap:8px;}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--text-faint);font-size:13px;}
+
+  @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+
+  @media(max-width:820px){
+    .sidebar{width:70px;}
+    .brand-text,.brand-sub,.nav-item span,.admin-name,.admin-role,.logout-btn span{display:none;}
+    .sidebar-foot{display:flex;justify-content:center;padding:14px 0 0;}
+    .admin-chip{flex-direction:column;}
+    .topbar{padding:16px 18px;}
+    .content{padding:18px;}
+    .pulsebar{padding:0 18px 8px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="radar"><div class="radar-sweep"></div></div>
+  <div class="login-card">
+    <div class="login-brand"><div class="dot"></div><span>Nocta · Panel Admin</span></div>
+    <h1>Acceso restringido</h1>
+    <p>Ingresa la contraseña de administrador para continuar.</p>
+    <input type="password" id="password-input" placeholder="Contraseña" autocomplete="off">
+    <button onclick="tryLogin()">Entrar al panel</button>
+    <div class="login-error" id="login-error">Contraseña incorrecta. Intenta de nuevo.</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div class="brand-text">Nocta</div>
+          <div class="brand-sub">Panel Admin</div>
+        </div>
+      </div>
+
+      <nav>
+        <a class="nav-item active" data-section="resumen" onclick="goTo('resumen')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>Resumen</span>
+        </a>
+        <a class="nav-item" data-section="usuarios" onclick="goTo('usuarios')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.3 4.2 2.4 4.2 5.3"/></svg>
+          <span>Usuarios</span>
+        </a>
+        <a class="nav-item" data-section="estadisticas" onclick="goTo('estadisticas')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M11 20V4M18 20v-7"/></svg>
+          <span>Estadísticas</span>
+        </a>
+        <a class="nav-item" data-section="grupos" onclick="goTo('grupos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>
+          <span>Grupos</span>
+        </a>
+        <a class="nav-item" data-section="reportes" onclick="goTo('reportes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3v18M5 4h11l-2.5 3.5L16 11H5"/></svg>
+          <span>Reportes</span>
+          <span class="nav-badge" id="reports-badge">3</span>
+        </a>
+        <a class="nav-item" data-section="anuncios" onclick="goTo('anuncios')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 5.5 6 9H3v6h3l5 3.5V5.5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a9 9 0 0 1 0 12"/></svg>
+          <span>Anuncios</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="admin-chip">
+          <div class="admin-avatar">TO</div>
+          <div>
+            <div class="admin-name">The One</div>
+            <div class="admin-role">★ ADMIN</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()"><span>Cerrar sesión</span></button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="topbar-title">Resumen</h2>
+          <div class="topbar-sub" id="topbar-sub">Estado general de la plataforma</div>
+        </div>
+        <div class="clock">
+          <div id="clock-time">--:--:--</div>
+          <div class="tz">CDMX · America/Mexico_City</div>
+        </div>
+      </div>
+
+      <div class="pulsebar">
+        <div class="pulsebar-label">Actividad en vivo</div>
+        <div id="pulse-bars" style="display:flex;align-items:flex-end;gap:3px;height:100%;flex:1;"></div>
+      </div>
+
+      <div class="content">
+
+        <!-- ===== RESUMEN ===== -->
+        <section class="section active" id="section-resumen">
+          <div class="kpi-grid">
+            <div class="kpi-card" style="--kpi-accent:var(--violet)">
+              <div class="kpi-label">Usuarios totales</div>
+              <div class="kpi-value">1,847</div>
+              <div class="kpi-delta up">↑ 12% vs. semana pasada</div>
+            </div>
+            <div class="kpi-card" style="--kpi-accent:var(--teal)">
+              <div class="kpi-label">Activos ahora</div>
+              <div class="kpi-value">63</div>
+              <div class="kpi-delta">de 214 activos hoy</div>
+            </div>
+            <div class="kpi-card" style="--kpi-accent:var(--amber)">
+              <div class="kpi-label">Registros hoy</div>
+              <div class="kpi-value">28</div>
+              <div class="kpi-delta up">↑ prom. 22/día esta semana</div>
+            </div>
+            <div class="kpi-card" style="--kpi-accent:var(--rose)">
+              <div class="kpi-label">Eliminaciones hoy</div>
+              <div class="kpi-value">4</div>
+              <div class="kpi-delta">prom. 3.1/día esta semana</div>
+            </div>
+            <div class="kpi-card" style="--kpi-accent:var(--amber)">
+              <div class="kpi-label">Ingresos del mes</div>
+              <div class="kpi-value">14.2K ★</div>
+              <div class="kpi-delta up">↑ 8% vs. mes anterior</div>
+            </div>
+            <div class="kpi-card" style="--kpi-accent:var(--rose)">
+              <div class="kpi-label">Reportes pendientes</div>
+              <div class="kpi-value">3</div>
+              <div class="kpi-delta down">requieren revisión</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Actividad reciente</h3>
+                <span class="hint">Últimos eventos del sistema</span>
+              </div>
+              <div class="panel-body">
+                <div class="feed" id="activity-feed"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Distribución de tiers</h3>
+                <span class="hint">1,847 usuarios</span>
+              </div>
+              <div class="panel-body">
+                <div class="tier-bar" id="tier-bar-resumen"></div>
+                <div class="tier-legend" id="tier-legend-resumen"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== USUARIOS ===== -->
+        <section class="section" id="section-usuarios">
+          <input class="search-input" id="user-search" placeholder="Buscar por nombre o telegram_id..." oninput="renderUsers()">
+          <div class="filters" id="user-filters">
+            <button class="chip active" data-filter="todos" onclick="setUserFilter('todos')">Todos</button>
+            <button class="chip" data-filter="ahora" onclick="setUserFilter('ahora')">Activos ahora</button>
+            <button class="chip" data-filter="hoy" onclick="setUserFilter('hoy')">Activos hoy</button>
+            <button class="chip" data-filter="Premium" onclick="setUserFilter('Premium')">Premium</button>
+            <button class="chip" data-filter="Plus" onclick="setUserFilter('Plus')">Plus</button>
+            <button class="chip" data-filter="Regular" onclick="setUserFilter('Regular')">Regular</button>
+          </div>
+          <div class="panel">
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th><th>Telegram ID</th><th>Edad</th><th>Ciudad</th>
+                    <th>Estado</th><th>Tier</th><th>Admin</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ESTADÍSTICAS ===== -->
+        <section class="section" id="section-estadisticas">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Uso de la plataforma</h3>
+              <span class="hint">Últimos 7 días</span>
+            </div>
+            <div class="panel-body">
+              <div class="kpi-grid" style="margin-bottom:6px;">
+                <div class="kpi-card" style="--kpi-accent:var(--violet)">
+                  <div class="kpi-label">Promedio registros/día</div>
+                  <div class="kpi-value">22.4</div>
+                </div>
+                <div class="kpi-card" style="--kpi-accent:var(--rose)">
+                  <div class="kpi-label">Promedio eliminaciones/día</div>
+                  <div class="kpi-value">3.1</div>
+                </div>
+                <div class="kpi-card" style="--kpi-accent:var(--teal)">
+                  <div class="kpi-label">Retención 7 días</div>
+                  <div class="kpi-value">68%</div>
+                </div>
+              </div>
+              <div class="chart-wrap" id="usage-chart"></div>
+              <div class="chart-legend">
+                <div class="chart-legend-item"><span class="swatch" style="background:var(--violet)"></span>Registros</div>
+                <div class="chart-legend-item"><span class="swatch" style="background:var(--rose)"></span>Eliminaciones</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Ingresos por Telegram Stars</h3>
+                <span class="hint">Últimos 7 días</span>
+              </div>
+              <div class="panel-body">
+                <div class="chart-wrap" id="revenue-chart"></div>
+                <div class="chart-legend">
+                  <div class="chart-legend-item"><span class="swatch" style="background:var(--amber)"></span>★ Ingresos diarios</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Compras por plan</h3>
+                <span class="hint">Este mes</span>
+              </div>
+              <div class="panel-body">
+                <div class="feed">
+                  <div class="feed-row" style="font-family:var(--font-body);">
+                    <span class="badge badge-plus">Plus</span>
+                    <span class="feed-text" style="text-align:right;">61 compras · 9,150 ★</span>
+                  </div>
+                  <div class="feed-row" style="font-family:var(--font-body);">
+                    <span class="badge badge-premium">Premium</span>
+                    <span class="feed-text" style="text-align:right;">17 compras · 5,100 ★</span>
+                  </div>
+                  <div class="feed-row" style="font-family:var(--font-body);border-bottom:none;">
+                    <span style="color:var(--text-dim);font-size:12.5px;">Ticket promedio</span>
+                    <span class="feed-text" style="text-align:right;font-family:var(--font-mono);">182 ★</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== GRUPOS ===== -->
+        <section class="section" id="section-grupos">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Grupos activos</h3>
+              <span class="hint" id="grupos-count">—</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr><th>Nombre</th><th>Creador</th><th>Miembros</th><th>Expira en</th><th></th></tr>
+                </thead>
+                <tbody id="groups-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REPORTES ===== -->
+        <section class="section" id="section-reportes">
+          <div class="filters">
+            <button class="chip active" data-rfilter="pendiente" onclick="setReportFilter('pendiente')">Pendientes</button>
+            <button class="chip" data-rfilter="resuelto" onclick="setReportFilter('resuelto')">Resueltos</button>
+          </div>
+          <div id="reports-list"></div>
+        </section>
+
+        <!-- ===== ANUNCIOS ===== -->
+        <section class="section" id="section-anuncios">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Enviar anuncio masivo</h3>
+              <span class="hint" id="anuncio-count">—</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="broadcast-text" placeholder="Escribe el mensaje que se enviará a todos los usuarios..."
+                style="width:100%;min-height:140px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:14px;color:var(--text);font-size:13.5px;font-family:var(--font-body);outline:none;resize:vertical;margin-bottom:14px;"
+                oninput="document.getElementById('broadcast-char-count').textContent = this.value.length + ' caracteres'"></textarea>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <span id="broadcast-char-count" style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);">0 caracteres</span>
+                <span style="font-size:11.5px;color:var(--text-faint);">Mensaje sin posibilidad de respuesta.</span>
+              </div>
+              <button class="icon-btn" style="background:var(--violet);color:#0A0D14;border:none;padding:10px 18px;font-weight:600;" onclick="enviarBroadcast()">Enviar a todos los usuarios</button>
+              <div id="broadcast-status" style="margin-top:14px;font-size:12.5px;color:var(--text-dim);"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   NOCTA — PANEL ADMIN
+   Todos los datos de abajo son de EJEMPLO (mock data) donde no
+   se indique lo contrario. El resto ya está conectado a Supabase
+   vía el API en API_BASE.
+   ============================================================ */
+
+const API_BASE = 'https://nocta-bot-production.up.railway.app';
+let adminPassword = sessionStorage.getItem('nocta_admin_password') || '';
+
+function cabecera() {
+  return { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' };
+}
+
+async function tryLogin(){
+  const val = document.getElementById('password-input').value;
+  const res = await fetch(`${API_BASE}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: val }),
+  });
+
+  if(res.ok){
+    adminPassword = val;
+    sessionStorage.setItem('nocta_admin_password', val);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    boot();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+document.getElementById('password-input').addEventListener('keydown', e => { if(e.key === 'Enter') tryLogin(); });
+
+if (adminPassword) {
+  fetch(`${API_BASE}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: adminPassword }),
+  }).then((res) => {
+    if (res.ok) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      boot();
+    }
+  });
+}
+
+function logout(){
+  sessionStorage.removeItem('nocta_admin_password');
+  adminPassword = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('password-input').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+/* ---------- Navegación ---------- */
+const sectionMeta = {
+  resumen: ['Resumen', 'Estado general de la plataforma'],
+  usuarios: ['Usuarios', 'Gestión de cuentas y tiers'],
+  estadisticas: ['Estadísticas', 'Uso, registros y compras'],
+  grupos: ['Grupos', 'Grupos temporales activos'],
+  reportes: ['Reportes', 'Cola de moderación'],
+  anuncios: ['Anuncios', 'Enviar mensajes masivos a usuarios'],
+};
+function goTo(name){
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.section === name));
+  document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'section-' + name));
+  document.getElementById('topbar-title').textContent = sectionMeta[name][0];
+  document.getElementById('topbar-sub').textContent = sectionMeta[name][1];
+}
+
+/* ---------- Reloj CDMX ---------- */
+function tickClock(){
+  const el = document.getElementById('clock-time');
+  if(!el) return;
+  const now = new Date().toLocaleTimeString('es-MX', { timeZone:'America/Mexico_City', hour12:false });
+  el.textContent = now;
+}
+setInterval(tickClock, 1000);
+
+/* ---------- Barra de pulso (elemento de firma) ---------- */
+function initPulseBar(){
+  const wrap = document.getElementById('pulse-bars');
+  const n = 60;
+  const bars = [];
+  for(let i=0;i<n;i++){
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = (6 + Math.random()*22) + 'px';
+    wrap.appendChild(b);
+    bars.push(b);
+  }
+  setInterval(() => {
+    bars.forEach(b => { if(Math.random() < 0.35) b.style.height = (4 + Math.random()*26) + 'px'; });
+  }, 450);
+}
+
+/* ============================================================
+   ESTADO Y CARGA DE DATOS REALES
+   ============================================================ */
+
+let usersData = [];
+let groupsData = [];
+let reportsData = [];
+
+const tierColors = { Regular:'var(--text-faint)', Plus:'var(--violet)', Premium:'var(--amber)' };
+
+async function cargarResumen(){
+  const res = await fetch(`${API_BASE}/api/admin/resumen`, { headers: cabecera() });
+  const resumenData = await res.json();
+
+  const kpis = document.querySelectorAll('#section-resumen .kpi-value');
+  kpis[0].textContent = (resumenData.totalUsuarios || 0).toLocaleString('es-MX');
+  kpis[1].textContent = resumenData.activosAhora || 0;
+  kpis[1].parentElement.querySelector('.kpi-delta').textContent = `de ${resumenData.activosHoy || 0} activos hoy`;
+  kpis[2].textContent = resumenData.registrosHoy || 0;
+  kpis[3].textContent = resumenData.eliminacionesHoy || 0;
+  kpis[4].textContent = `${((resumenData.ingresosMes || 0)/1000).toFixed(1)}K ★`;
+  kpis[5].textContent = resumenData.reportesPendientes || 0;
+
+  renderActivityFeedReal(resumenData.actividadReciente || []);
+  renderTierDistributionReal(resumenData.distribucionTier);
+  document.getElementById('reports-badge').textContent = resumenData.reportesPendientes || 0;
+
+  const anuncioCountEl = document.getElementById('anuncio-count');
+  anuncioCountEl.textContent = `${(resumenData.totalUsuarios || 0).toLocaleString('es-MX')} usuarios registrados`;
+  anuncioCountEl.dataset.total = resumenData.totalUsuarios || 0;
+}
+
+let estadisticasData = null;
+async function cargarEstadisticas(){
+  const res = await fetch(`${API_BASE}/api/admin/estadisticas`, { headers: cabecera() });
+  estadisticasData = await res.json();
+
+  renderEliminacionesChart();
+  renderBarChart('revenue-chart', estadisticasData.ingresosPorDia.map(d => ({ d: d.fecha, stars: d.stars })), 'stars', 'var(--amber)');
+
+  const compras = estadisticasData.comprasPorPlan || {};
+  const totalCompras = (compras.plus?.cantidad || 0) + (compras.premium?.cantidad || 0);
+  const totalStars = (compras.plus?.stars || 0) + (compras.premium?.stars || 0);
+  const promedio = totalCompras > 0 ? Math.round(totalStars / totalCompras) : 0;
+
+  const feedCompras = document.querySelectorAll('#section-estadisticas .feed-row .feed-text');
+  if (feedCompras.length >= 3) {
+    feedCompras[0].textContent = `${compras.plus?.cantidad || 0} compras · ${compras.plus?.stars || 0} ★`;
+    feedCompras[1].textContent = `${compras.premium?.cantidad || 0} compras · ${compras.premium?.stars || 0} ★`;
+    feedCompras[2].textContent = `${promedio} ★`;
+  }
+
+  const kpisEst = document.querySelectorAll('#section-estadisticas .kpi-value');
+  if (kpisEst[0]) kpisEst[0].textContent = (estadisticasData.registrosPorDia.reduce((s,d)=>s+d.cantidad,0) / 7).toFixed(1);
+  if (kpisEst[1]) kpisEst[1].textContent = (estadisticasData.eliminacionesPorDia.reduce((s,d)=>s+d.cantidad,0) / 7).toFixed(1);
+  if (kpisEst[2]) kpisEst[2].textContent = estadisticasData.retencion7dias !== null ? `${estadisticasData.retencion7dias}%` : '—';
+}
+
+function renderEliminacionesChart(){
+  const el = document.getElementById('usage-chart');
+  const reg = estadisticasData.registrosPorDia;
+  const del = estadisticasData.eliminacionesPorDia;
+  const max = Math.max(1, ...reg.map(d=>d.cantidad), ...del.map(d=>d.cantidad));
+  el.innerHTML = reg.map((d, i) => {
+    const hReg = Math.max(4, (d.cantidad/max) * 110);
+    const hDel = Math.max(4, (del[i].cantidad/max) * 110);
+    return `
+    <div class="chart-col">
+      <div class="chart-bars">
+        <div class="bar" style="height:${hReg}px;background:var(--violet)"></div>
+        <div class="bar" style="height:${hDel}px;background:var(--rose)"></div>
+      </div>
+      <div class="chart-label">${d.fecha}</div>
+    </div>`;
+  }).join('');
+}
+
+function calcularActividad(fecha){
+  if (!fecha) return 'inactivo';
+  const minutos = (Date.now() - new Date(fecha).getTime()) / 60000;
+  if (minutos < 5) return 'ahora';
+  if (minutos < 60 * 24) return 'hoy';
+  return 'inactivo';
+}
+
+async function fetchUsuarios(q, tier){
+  const res = await fetch(`${API_BASE}/api/admin/usuarios?buscar=${encodeURIComponent(q)}&tier=${tier}`, { headers: cabecera() });
+  const data = await res.json();
+  usersData = (data.usuarios || []).map(u => ({
+    nombre: u.nombre,
+    tid: String(u.telegram_id),
+    edad: u.edad ?? '—',
+    ciudad: u.ciudad || '—',
+    tier: u.tier === 'premium' ? 'Premium' : u.tier === 'plus' ? 'Plus' : 'Regular',
+    admin: !!u.es_admin,
+    actividad: calcularActividad(u.ultima_actividad),
+  }));
+  renderUsers();
+}
+
+async function cargarGruposReal(){
+  const res = await fetch(`${API_BASE}/api/admin/grupos`, { headers: cabecera() });
+  const data = await res.json();
+  groupsData = (data.grupos || []).map(g => ({
+    id: g.id,
+    nombre: g.nombre + (g.es_privado ? ' 💎' : ''),
+    creador: String(g.creador_telegram_id),
+    miembros: g.miembros_actuales,
+    expiraMin: Math.max(0, Math.round((new Date(g.fecha_expiracion) - Date.now()) / 60000)),
+  }));
+  renderGroups();
+}
+
+async function cargarReportesReal(){
+  const res = await fetch(`${API_BASE}/api/admin/reportes`, { headers: cabecera() });
+  const data = await res.json();
+  reportsData = (data.reportes || []).map(r => ({
+    id: r.id,
+    reportado: r.nombre_reportado,
+    reportante: r.nombre_reportante,
+    razon: r.motivo || 'Sin motivo especificado',
+    tiempo: new Date(r.created_at).toLocaleDateString('es-MX'),
+    estado: r.estado === 'pendiente' ? 'pendiente' : 'resuelto',
+  }));
+  renderReports();
+}
+
+async function actualizarTier(telegramId, tier){
+  await fetch(`${API_BASE}/api/admin/usuarios/${telegramId}`, {
+    method: 'PATCH', headers: cabecera(), body: JSON.stringify({ tier: tier.toLowerCase() }),
+  });
+}
+
+async function eliminarUsuarioReal(telegramId, nombre){
+  if (!confirm(`¿Eliminar a ${nombre}? Esto no se puede deshacer.`)) return;
+  await fetch(`${API_BASE}/api/admin/usuarios/${telegramId}`, { method: 'DELETE', headers: cabecera() });
+  const tierMap = { Premium: 'premium', Plus: 'plus', Regular: 'regular' };
+  fetchUsuarios(document.getElementById('user-search').value.trim(), tierMap[userFilter] || '');
+}
+
+async function eliminarGrupoReal(id, nombre){
+  if (!confirm(`¿Eliminar el grupo ${nombre}?`)) return;
+  await fetch(`${API_BASE}/api/admin/grupos/${id}`, { method: 'DELETE', headers: cabecera() });
+  cargarGruposReal();
+}
+
+async function bloquearReportadoReal(id, nombre){
+  if (!confirm(`¿Bloquear a ${nombre}?`)) return;
+  await fetch(`${API_BASE}/api/admin/reportes/${id}/bloquear-reportado`, { method: 'POST', headers: cabecera() });
+  cargarReportesReal();
+}
+
+async function descartarReporteReal(id){
+  await fetch(`${API_BASE}/api/admin/reportes/${id}`, {
+    method: 'PATCH', headers: cabecera(), body: JSON.stringify({ estado: 'descartado' }),
+  });
+  cargarReportesReal();
+}
+
+async function enviarBroadcast(){
+  const texto = document.getElementById('broadcast-text').value.trim();
+  const statusEl = document.getElementById('broadcast-status');
+  if(!texto){
+    statusEl.textContent = 'Escribe un mensaje antes de enviar.';
+    statusEl.style.color = 'var(--rose)';
+    return;
+  }
+  const totalUsuarios = document.getElementById('anuncio-count').dataset.total || '?';
+  if(!confirm(`¿Enviar este mensaje a ${totalUsuarios} usuarios? Esta acción no se puede deshacer.`)) return;
+
+  statusEl.textContent = 'Enviando...';
+  statusEl.style.color = 'var(--text-dim)';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/broadcast`, {
+      method: 'POST',
+      headers: cabecera(),
+      body: JSON.stringify({ mensaje: texto }),
+    });
+    const data = await res.json();
+    if(res.ok){
+      statusEl.textContent = `Enviado a ${data.enviados} usuarios.${data.fallidos ? ' ' + data.fallidos + ' fallaron (bot bloqueado).' : ''}`;
+      statusEl.style.color = 'var(--teal)';
+      document.getElementById('broadcast-text').value = '';
+      document.getElementById('broadcast-char-count').textContent = '0 caracteres';
+    } else {
+      statusEl.textContent = 'Error al enviar: ' + (data.error || 'desconocido');
+      statusEl.style.color = 'var(--rose)';
+    }
+  } catch(err){
+    statusEl.textContent = 'Error de red al enviar el anuncio.';
+    statusEl.style.color = 'var(--rose)';
+  }
+}
+
+function renderActivityFeedReal(actividad){
+  const dotColor = { signup:'var(--teal)', purchase:'var(--amber)', report:'var(--rose)', delete:'var(--text-faint)' };
+  const wrap = document.getElementById('activity-feed');
+  if (actividad.length === 0) {
+    wrap.innerHTML = `<div class="empty">Sin actividad reciente todavía.</div>`;
+    return;
+  }
+  wrap.innerHTML = actividad.map(a => `
+    <div class="feed-row">
+      <span class="feed-time">${a.time}</span>
+      <span class="feed-dot" style="background:${dotColor[a.type]}"></span>
+      <span class="feed-text">${a.text}</span>
+    </div>`).join('');
+}
+
+function renderTierDistributionReal(counts){
+  const total = (counts.regular||0) + (counts.plus||0) + (counts.premium||0);
+  const bar = document.getElementById('tier-bar-resumen');
+  const legend = document.getElementById('tier-legend-resumen');
+  bar.innerHTML = ''; legend.innerHTML = '';
+  const hint = document.querySelector('#section-resumen .two-col .panel:nth-child(2) .hint');
+  if (hint) hint.textContent = `${total} usuarios`;
+  const mapa = { Regular: counts.regular||0, Plus: counts.plus||0, Premium: counts.premium||0 };
+  ['Regular','Plus','Premium'].forEach(t => {
+    const pct = total > 0 ? (mapa[t]/total*100).toFixed(0) : 0;
+    const seg = document.createElement('div');
+    seg.className = 'tier-seg';
+    seg.style.width = pct + '%';
+    seg.style.background = tierColors[t];
+    bar.appendChild(seg);
+    const row = document.createElement('div');
+    row.className = 'tier-legend-row';
+    row.innerHTML = `<div class="tier-legend-left"><span class="swatch" style="background:${tierColors[t]}"></span>${t}</div><span class="val">${mapa[t]} · ${pct}%</span>`;
+    legend.appendChild(row);
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+
+function relTime(min){
+  if(min < 60) return min + ' min';
+  return Math.floor(min/60) + 'h ' + (min%60) + 'm';
+}
+
+let userFilter = 'todos';
+let tempoBusqueda;
+function setUserFilter(f){
+  userFilter = f;
+  document.querySelectorAll('#user-filters .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+  const tierMap = { Premium: 'premium', Plus: 'plus', Regular: 'regular' };
+  fetchUsuarios(document.getElementById('user-search').value.trim(), tierMap[f] || '');
+}
+document.getElementById('user-search').addEventListener('input', () => {
+  clearTimeout(tempoBusqueda);
+  tempoBusqueda = setTimeout(() => {
+    const tierMap = { Premium: 'premium', Plus: 'plus', Regular: 'regular' };
+    fetchUsuarios(document.getElementById('user-search').value.trim(), tierMap[userFilter] || '');
+  }, 350);
+});
+
+function renderUsers(){
+  const tbody = document.getElementById('users-tbody');
+  let rows = usersData.filter(u => {
+    if(userFilter === 'ahora' && u.actividad !== 'ahora') return false;
+    if(userFilter === 'hoy' && !(u.actividad === 'ahora' || u.actividad === 'hoy')) return false;
+    return true;
+  });
+  if(rows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty">Ningún usuario coincide con este filtro.</div></td></tr>`;
+    return;
+  }
+  const statusMap = {
+    ahora: ['live', 'var(--teal)', 'Activo ahora'],
+    hoy: ['', 'var(--amber)', 'Activo hoy'],
+    inactivo: ['', 'var(--text-faint)', 'Inactivo'],
+  };
+  tbody.innerHTML = rows.map(u => {
+    const [liveCls, color, label] = statusMap[u.actividad];
+    return `
+    <tr>
+      <td class="cell-name">${escapeHtml(u.nombre)}</td>
+      <td class="cell-mono">${u.tid}</td>
+      <td class="cell-mono">${u.edad}</td>
+      <td class="cell-mono">${escapeHtml(String(u.ciudad))}</td>
+      <td><span class="status-dot ${liveCls}" style="--dot-color:${color}">${label}</span></td>
+      <td>
+        <select class="tier-select" data-id="${u.tid}">
+          <option value="Regular" ${u.tier==='Regular'?'selected':''}>Regular</option>
+          <option value="Plus" ${u.tier==='Plus'?'selected':''}>Plus</option>
+          <option value="Premium" ${u.tier==='Premium'?'selected':''}>Premium</option>
+        </select>
+      </td>
+      <td>${u.admin ? '<span class="crown">★</span>' : '<span style="color:var(--text-faint)">—</span>'}</td>
+      <td><button class="icon-btn danger" data-id="${u.tid}" data-nombre="${escapeHtml(u.nombre)}">Eliminar</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.tier-select').forEach((sel) => {
+    sel.addEventListener('change', () => actualizarTier(sel.dataset.id, sel.value));
+  });
+  tbody.querySelectorAll('.icon-btn.danger').forEach((btn) => {
+    btn.addEventListener('click', () => eliminarUsuarioReal(btn.dataset.id, btn.dataset.nombre));
+  });
+}
+
+function renderGroups(){
+  const tbody = document.getElementById('groups-tbody');
+  document.getElementById('grupos-count').textContent = groupsData.length + ' activos';
+  if (groupsData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">No hay grupos activos.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = groupsData.map(g => `
+    <tr>
+      <td class="cell-name">${escapeHtml(g.nombre)}</td>
+      <td class="cell-mono">${g.creador}</td>
+      <td class="cell-mono">${g.miembros}</td>
+      <td class="cell-mono" style="color:${g.expiraMin < 15 ? 'var(--rose)' : 'var(--text-dim)'}">${relTime(g.expiraMin)}</td>
+      <td><button class="icon-btn danger" data-id="${g.id}" data-nombre="${escapeHtml(g.nombre)}">Eliminar</button></td>
+    </tr>`).join('');
+
+  tbody.querySelectorAll('.icon-btn.danger').forEach((btn) => {
+    btn.addEventListener('click', () => eliminarGrupoReal(btn.dataset.id, btn.dataset.nombre));
+  });
+}
+
+let reportFilter = 'pendiente';
+function setReportFilter(f){
+  reportFilter = f;
+  document.querySelectorAll('[data-rfilter]').forEach(c => c.classList.toggle('active', c.dataset.rfilter === f));
+  renderReports();
+}
+function renderReports(){
+  const list = document.getElementById('reports-list');
+  const rows = reportsData.filter(r => r.estado === reportFilter);
+  if(rows.length === 0){
+    list.innerHTML = `<div class="empty">No hay reportes ${reportFilter === 'pendiente' ? 'pendientes' : 'resueltos'}.</div>`;
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="report-card">
+      <div class="report-top">
+        <div class="report-parties"><b>${escapeHtml(r.reportado)}</b><span class="arrow">←</span>reportado por <b>${escapeHtml(r.reportante)}</b></div>
+        <div class="report-time">${r.tiempo}</div>
+      </div>
+      <div class="report-reason">${escapeHtml(r.razon)}</div>
+      ${reportFilter === 'pendiente' ? `
+      <div class="report-actions">
+        <button class="icon-btn accept" data-accion="descartar" data-id="${r.id}">Ignorar</button>
+        <button class="icon-btn danger" data-accion="bloquear" data-id="${r.id}" data-nombre="${escapeHtml(r.reportado)}">Bloquear usuario</button>
+      </div>` : ''}
+    </div>`).join('');
+
+  list.querySelectorAll('[data-accion="descartar"]').forEach((btn) => {
+    btn.addEventListener('click', () => descartarReporteReal(btn.dataset.id));
+  });
+  list.querySelectorAll('[data-accion="bloquear"]').forEach((btn) => {
+    btn.addEventListener('click', () => bloquearReportadoReal(btn.dataset.id, btn.dataset.nombre));
+  });
+}
+
+function renderBarChart(containerId, data, key, color, formatVal){
+  const el = document.getElementById(containerId);
+  const max = Math.max(...data.map(d => d[key]));
+  el.innerHTML = data.map(d => {
+    const h = Math.max(6, (d[key]/max) * 110);
+    return `
+    <div class="chart-col">
+      <div class="chart-bars"><div class="bar" style="height:${h}px;background:${color}"></div></div>
+      <div class="chart-label">${d.d}</div>
+    </div>`;
+  }).join('');
+}
+
+function boot(){
+  tickClock();
+  initPulseBar();
+  cargarResumen();
+  cargarEstadisticas();
+  fetchUsuarios('', '');
+  cargarGruposReal();
+  cargarReportesReal();
+}
+</script>
+</body>
+</html>
